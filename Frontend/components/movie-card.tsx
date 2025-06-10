@@ -25,13 +25,14 @@ import { mapGenreIdsToNames } from "@/lib/genres";
 interface Movie {
   id: number;
   title: string;
-  poster_path: string;
+  poster_path: string | null;
   backdrop_path: string;
   overview: string;
   release_date: string;
   vote_average: number;
-  genre_ids?: number[];
-  genres?: string[];
+  runtime?: number;
+  genre_ids?: number[]; // for TMDB minimal data
+  genres?: string[] | { id: number; name: string }[]; // accept both
 }
 
 interface MovieCardProps {
@@ -58,16 +59,25 @@ export function MovieCard({
     libraryItem.expiryDate &&
     new Date(libraryItem.expiryDate).getTime() < new Date().getTime();
 
-  const genres =
-    movie.genres ||
-    (movie.genre_ids ? mapGenreIdsToNames(movie.genre_ids) : []);
-  const releaseYear = new Date(movie.release_date).getFullYear();
+  const rawGenres = movie.genres;
+
+  const genres = Array.isArray(rawGenres)
+    ? typeof rawGenres[0] === "string"
+      ? (rawGenres as string[])
+      : (rawGenres as { id: number; name: string }[]).map((g) => g.name)
+    : movie.genre_ids
+    ? mapGenreIdsToNames(movie.genre_ids)
+    : [];
 
   const sizeClasses = {
     sm: "w-[140px] sm:w-[160px] h-[210px] sm:h-[240px]",
     md: "w-[160px] sm:w-[180px] lg:w-[200px] h-[240px] sm:h-[270px] lg:h-[300px]",
     lg: "w-[180px] sm:w-[200px] lg:w-[240px] h-[270px] sm:h-[300px] lg:h-[360px]",
   };
+
+  const releaseYear = movie.release_date
+    ? new Date(movie.release_date).getFullYear()
+    : "N/A";
 
   const handleWatchlistToggle = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -81,7 +91,10 @@ export function MovieCard({
         type: "default",
       });
     } else {
-      addToWatchlist(movie);
+      addToWatchlist({
+        ...movie,
+        poster_path: movie.poster_path ?? "",
+      });
       addToast({
         title: "Added to Watchlist",
         description: `${movie.title} has been added.`,
@@ -233,7 +246,10 @@ export function MovieCard({
       </div>
 
       <PricingModal
-        movie={movie}
+        movie={{
+          ...movie,
+          poster_path: movie.poster_path ?? "",
+        }}
         isOpen={showPricingModal}
         onClose={() => setShowPricingModal(false)}
       />

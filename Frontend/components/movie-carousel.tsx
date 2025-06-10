@@ -69,7 +69,13 @@ export function MovieCarousel({ title, movies }: MovieCarouselProps) {
         >
           {movies.map((movie) => (
             <div key={movie.id} className="flex-shrink-0">
-              <MovieCard movie={movie} size="md" />
+              <MovieCard
+                movie={{
+                  ...movie,
+                  backdrop_path: movie.backdrop_path ?? "",
+                }}
+                size="md"
+              />
             </div>
           ))}
         </div>

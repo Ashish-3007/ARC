@@ -1,13 +1,14 @@
-// lib/movie-data.ts
 import {
   fetchMovieDetailsById,
   fetchNewReleases,
   fetchNowPlayingMovies,
   fetchPopularMovies,
   fetchTopRatedMovies,
+  searchMovies,
+  fetchMoviesByGenres,
 } from "./tmdb";
 
-// Type mapping based on TMDB response:
+// TMDB Movie Type
 export interface Movie {
   id: number;
   title: string;
@@ -25,23 +26,45 @@ export interface Movie {
       character: string;
       profile_path: string | null;
     }[];
-    crew: { job: string; name: string }[];
+    crew: {
+      job: string;
+      name: string;
+    }[];
   };
-  videos: { results: { key: string; site: string; type: string }[] };
+  videos: {
+    results: {
+      key: string;
+      site: string;
+      type: string;
+    }[];
+  };
 }
 
+// Get movie by ID
 export async function getMovieById(id: number): Promise<Movie | null> {
   try {
     const data = await fetchMovieDetailsById(id);
     return data as Movie;
-  } catch {
+  } catch (error) {
+    console.error("Failed to fetch movie by ID:", error);
     return null;
   }
 }
 
+// Optional: Get trailer key
+export function getYouTubeTrailerKey(movie: Movie): string | null {
+  const trailers = movie.videos?.results?.filter(
+    (vid) => vid.site === "YouTube" && vid.type === "Trailer"
+  );
+  return trailers?.[0]?.key ?? null;
+}
+
+// Export fetch functions
 export {
   fetchPopularMovies,
   fetchTopRatedMovies,
   fetchNowPlayingMovies,
   fetchNewReleases,
+  searchMovies,
+  fetchMoviesByGenres,
 };
