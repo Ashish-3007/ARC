@@ -1,52 +1,61 @@
-"use client"
+"use client";
 
-import { cn } from "@/lib/utils"
-
-import { Play, Plus, Info, Check } from "lucide-react"
-import { useWatchlist } from "@/contexts/watchlist-context"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import Link from "next/link"
-import type { Movie } from "@/lib/mock-data"
+import { cn } from "@/lib/utils";
+import { Play, Plus, Info, Check } from "lucide-react";
+import { useWatchlist } from "@/contexts/watchlist-context";
+import { Button } from "@/components/ui/button";
+import { getBackdropUrl } from "@/lib/tmdb";
+import { Badge } from "@/components/ui/badge";
+import Link from "next/link";
+import type { Movie } from "@/lib/mock-data";
 
 interface HeroSectionProps {
-  movie: Movie
+  movie: Movie;
 }
 
 export function HeroSection({ movie }: HeroSectionProps) {
-  const { addToWatchlist, removeFromWatchlist, isInWatchlist } = useWatchlist()
-  const inWatchlist = isInWatchlist(movie.id)
+  const { addToWatchlist, removeFromWatchlist, isInWatchlist } = useWatchlist();
+  const inWatchlist = isInWatchlist(movie.id);
 
   const handleWatchlistToggle = () => {
     if (inWatchlist) {
-      removeFromWatchlist(movie.id)
+      removeFromWatchlist(movie.id);
     } else {
-      addToWatchlist(movie)
+      addToWatchlist({ ...movie, poster_path: movie.poster_path ?? "" });
     }
-  }
+  };
 
-  const releaseYear = new Date(movie.release_date).getFullYear()
+  const releaseYear = new Date(movie.release_date).getFullYear();
+
+  const backdropUrl = getBackdropUrl(
+    movie.backdrop_path || movie.poster_path,
+    "w1280"
+  );
 
   return (
-    <div className="relative h-[50vh] sm:h-[60vh] lg:h-[75vh] xl:h-[85vh] overflow-hidden">
-      {/* Background Image with Gradient */}
-      <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${movie.backdrop_path})` }}>
-        <div className="absolute inset-0 bg-gradient-to-r from-[#121212] via-[#121212]/80 to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#121212]/60 via-transparent to-transparent" />
-      </div>
+    <div className="relative h-[60vh] sm:h-[70vh] lg:h-[80vh] xl:h-[85vh] overflow-hidden">
+      {/* Background Image */}
+      <div
+        className="absolute inset-0 bg-cover bg-center z-0 opacity-100"
+        style={{ backgroundImage: `url(${backdropUrl})` }}
+      />
 
-      {/* Content */}
-      <div className="relative z-10 flex items-center h-full px-4 sm:px-6 lg:px-8">
+      {/* Gradient Overlays */}
+      <div className="absolute inset-0 bg-gradient-to-r from-[#121212] via-[#121212]/80 to-transparent z-10" />
+      <div className="absolute inset-0 bg-gradient-to-t from-[#121212]/60 via-transparent to-transparent z-10" />
+
+      {/* Main Content */}
+      <div className="relative z-20 flex items-center h-full px-4 sm:px-6 lg:px-8">
         <div className="max-w-xl lg:max-w-2xl animate-slide-up">
-          {/* Badges */}
+          {/* Genres */}
           <div className="flex flex-wrap gap-2 mb-3 sm:mb-4">
             {movie.genres?.slice(0, 3).map((genre) => (
               <Badge
-                key={genre}
+                key={genre.id}
                 variant="secondary"
                 className="bg-black/40 backdrop-blur-sm border border-white/10 text-xs sm:text-sm"
               >
-                {genre}
+                {genre.name}
               </Badge>
             ))}
           </div>
@@ -59,7 +68,10 @@ export function HeroSection({ movie }: HeroSectionProps) {
           {/* Meta Info */}
           <div className="flex flex-wrap items-center gap-3 sm:gap-4 mb-3 sm:mb-4 text-xs sm:text-sm text-gray-300">
             <div className="flex items-center">
-              <Badge variant="default" className="mr-2 bg-purple-600/80 backdrop-blur-sm text-xs">
+              <Badge
+                variant="default"
+                className="mr-2 bg-purple-600/80 backdrop-blur-sm text-xs"
+              >
                 {movie.vote_average.toFixed(1)}
               </Badge>
               <span className="hidden sm:inline">Rating</span>
@@ -73,10 +85,13 @@ export function HeroSection({ movie }: HeroSectionProps) {
             {movie.overview}
           </p>
 
-          {/* Action Buttons */}
+          {/* Buttons */}
           <div className="flex flex-col sm:flex-row flex-wrap gap-2 sm:gap-3 lg:gap-4">
             <Link href={`/player/${movie.id}`}>
-              <Button size="lg" className="w-full sm:w-auto bg-purple-600 hover:bg-purple-700 text-white shadow-lg">
+              <Button
+                size="lg"
+                className="w-full sm:w-auto bg-purple-600 hover:bg-purple-700 text-white shadow-lg"
+              >
                 <Play className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
                 Play
               </Button>
@@ -99,7 +114,9 @@ export function HeroSection({ movie }: HeroSectionProps) {
               onClick={handleWatchlistToggle}
               className={cn(
                 "w-full sm:w-auto border-gray-600/50 backdrop-blur-sm",
-                inWatchlist ? "bg-green-600/20 border-green-600/50 text-green-400" : "hover:bg-gray-800/30",
+                inWatchlist
+                  ? "bg-green-600/20 border-green-600/50 text-green-400"
+                  : "hover:bg-gray-800/30"
               )}
             >
               {inWatchlist ? (
@@ -120,5 +137,5 @@ export function HeroSection({ movie }: HeroSectionProps) {
         </div>
       </div>
     </div>
-  )
+  );
 }

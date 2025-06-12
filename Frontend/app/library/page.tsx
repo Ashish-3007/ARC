@@ -1,80 +1,90 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { Play, Download, Clock } from "lucide-react"
-import Link from "next/link"
-import { useLibrary } from "@/contexts/library-context"
-import { PageLayout } from "@/components/page-layout"
-import { Card, CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
-import { formatCurrency } from "@/lib/utils"
+import { useState, useEffect } from "react";
+import { Play, Download, Clock } from "lucide-react";
+import Link from "next/link";
+import { useLibrary } from "@/contexts/library-context";
+import { PageLayout } from "@/components/page-layout";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { formatCurrency } from "@/lib/utils";
 
 function CountdownTimer({ expiryDate }: { expiryDate: string }) {
-  const [timeLeft, setTimeLeft] = useState("")
+  const [timeLeft, setTimeLeft] = useState("");
 
   useEffect(() => {
     const timer = setInterval(() => {
-      const now = new Date().getTime()
-      const expiry = new Date(expiryDate).getTime()
-      const difference = expiry - now
+      const now = new Date().getTime();
+      const expiry = new Date(expiryDate).getTime();
+      const difference = expiry - now;
 
       if (difference > 0) {
-        const days = Math.floor(difference / (1000 * 60 * 60 * 24))
-        const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
-        const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60))
+        const days = Math.floor(difference / (1000 * 60 * 60 * 24));
+        const hours = Math.floor(
+          (difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
+        );
+        const minutes = Math.floor(
+          (difference % (1000 * 60 * 60)) / (1000 * 60)
+        );
 
         if (days > 0) {
-          setTimeLeft(`${days}d ${hours}h`)
+          setTimeLeft(`${days}d ${hours}h`);
         } else if (hours > 0) {
-          setTimeLeft(`${hours}h ${minutes}m`)
+          setTimeLeft(`${hours}h ${minutes}m`);
         } else {
-          setTimeLeft(`${minutes}m`)
+          setTimeLeft(`${minutes}m`);
         }
       } else {
-        setTimeLeft("Expired")
+        setTimeLeft("Expired");
       }
-    }, 1000)
+    }, 1000);
 
-    return () => clearInterval(timer)
-  }, [expiryDate])
+    return () => clearInterval(timer);
+  }, [expiryDate]);
 
   const isExpiringSoon = () => {
-    const now = new Date().getTime()
-    const expiry = new Date(expiryDate).getTime()
-    const difference = expiry - now
-    return difference > 0 && difference < 24 * 60 * 60 * 1000 // Less than 24 hours
-  }
+    const now = new Date().getTime();
+    const expiry = new Date(expiryDate).getTime();
+    const difference = expiry - now;
+    return difference > 0 && difference < 24 * 60 * 60 * 1000; // Less than 24 hours
+  };
 
   return (
     <Badge
-      variant={timeLeft === "Expired" ? "destructive" : isExpiringSoon() ? "warning" : "secondary"}
+      variant={
+        timeLeft === "Expired"
+          ? "destructive"
+          : isExpiringSoon()
+          ? "outline"
+          : "secondary"
+      }
       className="flex items-center space-x-1"
     >
       <Clock className="w-3 h-3" />
       <span>{timeLeft}</span>
     </Badge>
-  )
+  );
 }
 
 export default function LibraryPage() {
-  const { items } = useLibrary()
-  const [activeTab, setActiveTab] = useState("all")
+  const { items } = useLibrary();
+  const [activeTab, setActiveTab] = useState("all");
 
-  const rentedItems = items.filter((item) => item.type === "rent")
-  const ownedItems = items.filter((item) => item.type === "buy")
+  const rentedItems = items.filter((item) => item.type === "rent");
+  const ownedItems = items.filter((item) => item.type === "buy");
 
   const getItemsForTab = (tab: string) => {
     switch (tab) {
       case "rented":
-        return rentedItems
+        return rentedItems;
       case "owned":
-        return ownedItems
+        return ownedItems;
       default:
-        return items
+        return items;
     }
-  }
+  };
 
   const LibraryGrid = ({ items }: { items: typeof rentedItems }) => (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -145,14 +155,16 @@ export default function LibraryPage() {
         </Card>
       ))}
     </div>
-  )
+  );
 
   return (
     <PageLayout title="My Library">
       <div className="max-w-7xl mx-auto">
         <div className="mb-8">
           <div className="flex items-center justify-between mb-6">
-            <p className="text-gray-400">{items.length} movies in your collection</p>
+            <p className="text-gray-400">
+              {items.length} movies in your collection
+            </p>
 
             <div className="flex items-center space-x-4 text-sm text-gray-400">
               <div className="flex items-center space-x-2">
@@ -170,25 +182,39 @@ export default function LibraryPage() {
         <Tabs defaultValue="all">
           <TabsList className="mb-8">
             <TabsTrigger value="all">All Movies ({items.length})</TabsTrigger>
-            <TabsTrigger value="rented">Rented ({rentedItems.length})</TabsTrigger>
+            <TabsTrigger value="rented">
+              Rented ({rentedItems.length})
+            </TabsTrigger>
             <TabsTrigger value="owned">Owned ({ownedItems.length})</TabsTrigger>
           </TabsList>
 
           <TabsContent value="all">
-            {items.length > 0 ? <LibraryGrid items={items} /> : <EmptyState type="all" />}
+            {items.length > 0 ? (
+              <LibraryGrid items={items} />
+            ) : (
+              <EmptyState type="all" />
+            )}
           </TabsContent>
 
           <TabsContent value="rented">
-            {rentedItems.length > 0 ? <LibraryGrid items={rentedItems} /> : <EmptyState type="rented" />}
+            {rentedItems.length > 0 ? (
+              <LibraryGrid items={rentedItems} />
+            ) : (
+              <EmptyState type="rented" />
+            )}
           </TabsContent>
 
           <TabsContent value="owned">
-            {ownedItems.length > 0 ? <LibraryGrid items={ownedItems} /> : <EmptyState type="owned" />}
+            {ownedItems.length > 0 ? (
+              <LibraryGrid items={ownedItems} />
+            ) : (
+              <EmptyState type="owned" />
+            )}
           </TabsContent>
         </Tabs>
       </div>
     </PageLayout>
-  )
+  );
 }
 
 function EmptyState({ type }: { type: "all" | "rented" | "owned" }) {
@@ -196,21 +222,23 @@ function EmptyState({ type }: { type: "all" | "rented" | "owned" }) {
     all: {
       icon: "📚",
       title: "Your library is empty",
-      description: "Start building your collection by renting or buying movies.",
+      description:
+        "Start building your collection by renting or buying movies.",
     },
     rented: {
       icon: "🎬",
       title: "No rented movies",
-      description: "Rent movies to watch them for a limited time at a great price.",
+      description:
+        "Rent movies to watch them for a limited time at a great price.",
     },
     owned: {
       icon: "💎",
       title: "No owned movies",
       description: "Buy movies to add them permanently to your collection.",
     },
-  }
+  };
 
-  const message = messages[type]
+  const message = messages[type];
 
   return (
     <div className="text-center py-16">
@@ -221,5 +249,5 @@ function EmptyState({ type }: { type: "all" | "rented" | "owned" }) {
         <Button size="lg">Browse Movies</Button>
       </Link>
     </div>
-  )
+  );
 }

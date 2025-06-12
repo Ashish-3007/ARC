@@ -91,17 +91,17 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#121212]">
+    <div className="min-h-screen bg-[#121212] overflow-x-hidden">
       <div
         className={cn(
           "transition-all duration-300",
-          "ml-0",
-          isOpen ? "lg:ml-72" : "lg:ml-20"
+          isOpen ? "lg:ml-72" : "lg:ml-20",
+          "ml-0"
         )}
       >
         {heroMovie && <HeroSection movie={heroMovie} />}
 
-        <div className="px-4 sm:px-6 lg:px-8 pb-8 sm:pb-12 space-y-6 sm:space-y-8 lg:space-y-12">
+        <div className="w-full max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 pb-8 sm:pb-12 space-y-6 sm:space-y-8 lg:space-y-12">
           <MovieCarousel title="Trending Now" movies={popular} />
           <MovieCarousel title="Top Picks" movies={topRated} />
           <MovieCarousel title="Now Playing" movies={nowPlaying} />

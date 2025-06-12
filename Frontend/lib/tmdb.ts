@@ -1,15 +1,18 @@
 const API_KEY = process.env.NEXT_PUBLIC_TMDB_API_KEY!;
 const BASE_URL = "https://api.themoviedb.org/3";
 
-// Helper to build URL with API key
+// Build full TMDB API URL with key
 function buildEndpoint(endpoint: string) {
   const connector = endpoint.includes("?") ? "&" : "?";
   return `${BASE_URL}${endpoint}${connector}api_key=${API_KEY}&language=en-US`;
 }
 
+// Generic fetch helper
 async function fetchFromTmdb<T = any>(endpoint: string): Promise<T> {
-  const res = await fetch(buildEndpoint(endpoint));
-  if (!res.ok) throw new Error(`Failed to fetch: ${endpoint}`);
+  const res = await fetch(buildEndpoint(endpoint), {
+    next: { revalidate: 3600 }, // optional caching: 1 hour
+  });
+  if (!res.ok) throw new Error(`TMDB fetch failed: ${endpoint}`);
   return res.json();
 }
 
@@ -45,7 +48,7 @@ export async function fetchNewReleases() {
   return data.results;
 }
 
-// 🔍 Search with Query
+// 🔍 Search
 export async function searchMovies(query: string) {
   const data = await fetchFromTmdb(
     `/search/movie?query=${encodeURIComponent(query)}&include_adult=false`
@@ -53,7 +56,13 @@ export async function searchMovies(query: string) {
   return data.results;
 }
 
-// 🔍 Genre-based Discovery
+// 🎭 Genre List
+export async function fetchGenres(): Promise<{ id: number; name: string }[]> {
+  const data = await fetchFromTmdb("/genre/movie/list");
+  return data.genres;
+}
+
+// 🔍 Discover by Genre
 export async function fetchMoviesByGenres(genres: string[]) {
   const genreMap = await fetchGenres();
   const genreIds = genres
@@ -70,20 +79,14 @@ export async function fetchMoviesByGenres(genres: string[]) {
   return data.results;
 }
 
-// 🎭 Genre List
-export async function fetchGenres(): Promise<{ id: number; name: string }[]> {
-  const data = await fetchFromTmdb("/genre/movie/list");
-  return data.genres;
-}
-
-// 🎞 Full Movie Details
+// 🎞 Full Movie Details + credits & videos
 export async function fetchMovieDetailsById(movieId: number | string) {
   return await fetchFromTmdb(
     `/movie/${movieId}?append_to_response=credits,videos`
   );
 }
 
-// 🎥 Movie Videos
+// 🎥 Videos Only
 export async function fetchMovieVideos(movieId: number | string) {
   const data = await fetchFromTmdb(`/movie/${movieId}/videos`);
   return data.results;
@@ -97,4 +100,40 @@ export function getPosterUrl(
   return path
     ? `https://image.tmdb.org/t/p/${size}${path}`
     : "/placeholder.svg";
+}
+
+// 🖼 Backdrop URL
+export function getBackdropUrl(
+  path: string | null | undefined,
+  size: "w300" | "w780" | "w1280" | "original" = "w1280"
+): string {
+  if (!path) return "/placeholder.csv"; // local placeholder if needed
+  return `https://image.tmdb.org/t/p/${size}${path}`;
+}
+
+// 🏆 Top Trending Movie of the Day
+export async function getTopTrendingMovie() {
+  const trending = await fetchFromTmdb<{ results: any[] }>(
+    "/trending/movie/day"
+  );
+  const top = trending.results?.[0];
+  if (!top) return null;
+
+  const [details, credits] = await Promise.all([
+    fetchMovieDetailsById(top.id),
+    fetchFromTmdb(`/movie/${top.id}/credits`),
+  ]);
+
+  return {
+    id: details.id,
+    title: details.title,
+    poster_path: getPosterUrl(details.poster_path),
+    backdrop_path: getBackdropUrl(details.backdrop_path),
+    overview: details.overview,
+    release_date: details.release_date,
+    vote_average: details.vote_average,
+    runtime: details.runtime,
+    genres: details.genres?.map((g: { name: string }) => g.name) || [],
+    credits,
+  };
 }
